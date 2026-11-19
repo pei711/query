@@ -22,6 +22,40 @@ describe('useQueries', () => {
     vi.useRealTimers()
   })
 
+  it('should not loop when placeholderData changes reference between renders', () => {
+    const key = createKey()
+
+    class Row {
+      constructor(readonly name: string) {}
+    }
+
+    function Page() {
+      const [, rerender] = React.useReducer(() => ({}), {})
+      const [result] = useQueries({
+        queries: [
+          {
+            queryKey: key,
+            queryFn: () => new Promise<Row>(() => {}),
+            placeholderData: new Row('row'),
+          },
+        ],
+      })
+
+      return (
+        <div>
+          <div>placeholder: {String(result.isPlaceholderData)}</div>
+          <button onClick={rerender}>rerender</button>
+        </div>
+      )
+    }
+
+    const rendered = renderWithClient(queryClient, <Page />)
+
+    expect(rendered.getByText('placeholder: true')).toBeInTheDocument()
+    fireEvent.click(rendered.getByRole('button', { name: 'rerender' }))
+    expect(rendered.getByText('placeholder: true')).toBeInTheDocument()
+  })
+
   it('should return the correct states', async () => {
     const key1 = createKey()
     const key2 = createKey()

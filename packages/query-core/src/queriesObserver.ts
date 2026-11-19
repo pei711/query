@@ -266,6 +266,22 @@ export class QueriesObserver<
       (match) => match.defaultedQueryOptions.queryHash,
     )
 
+    const hasSameObservers =
+      matches.length === this.#observers.length &&
+      matches.every((match, index) => match.observer === this.#observers[index])
+
+    if (hasSameObservers) {
+      if (
+        result.some(
+          (nextResult, index) =>
+            !shallowEqualObjects(nextResult, this.#result[index]),
+        )
+      ) {
+        this.#result = result
+      }
+      this.#observerMatches = matches
+    }
+
     return [
       result,
       (r?: Array<QueryObserverResult>) => {
